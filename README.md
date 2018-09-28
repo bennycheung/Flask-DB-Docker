@@ -1,6 +1,6 @@
 ## Microservices Architecture
 This example has been composed from the Microserivices Architecture style.
-With this style, we could provide Runway components with a realistic compostability. We recommend to read the Martin Fowler and James Lewis's white paper on Microservice architecture. Their white paper goes much more in-depth for the drivers behind the [Microservice Architecture](http://martinfowler.com/articles/microservices.html)
+With this style, we could provide service components with a realistic compostability. We recommend to read the Martin Fowler and James Lewis's white paper on Microservice architecture. Their white paper goes much more in-depth for the drivers behind the [Microservice Architecture](http://martinfowler.com/articles/microservices.html)
 
 Starter microservices documentations:
 * [Starter API Documentation](starter-api/README.md)
@@ -21,7 +21,8 @@ Conversely, we can shutdown all the containers by,
     $ docker-compose -f docker-compose.yml down
 
 
-###Persistent Volumes with Docker - Data-only Container Pattern
+### Persistent Volumes with Docker - Data-only Container Pattern
+----------------
 
 -- Dockerfile --
 
