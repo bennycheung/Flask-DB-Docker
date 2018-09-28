@@ -1,0 +1,39 @@
+@startuml Starter_Microservices_Deployment
+
+node "<<executionEnvironment>>\nAPI Service - Flask/Python\nimage_name: starter-api" as API #orange {
+}
+
+node "<<executionEnvionment>>\nDB Server - PosgreSQL\nimage_name: db/postgres" as DB #orange {
+}
+
+node "<<device>>\nDB Volume - Persistence\nimage_name: db/postgres_datastore" as Volume #cyan {
+}
+
+note right of API
+docker run -d -t
+    -v `pwd`/logs:/app/logs
+    --name starter-api
+    --link postgres:postgres
+    -p 5000:5000 starter-api
+endnote
+
+note right of DB
+docker run -d
+    -e POSTGRES_USER=docker
+    -e POSTGRES_PASSWORD=docker
+    -e POSTGRES_DB=starter
+    --volumes-from postgres_data
+    --name postgres
+    -p 5432:5432 db/postgres
+endnote
+
+note right of Volume
+docker run -i -t
+    --name postgres_data
+    db/postgres_datastore
+endnote
+
+API --> DB
+DB --> Volume
+
+@enduml

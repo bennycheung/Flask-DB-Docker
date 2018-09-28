@@ -1,0 +1,16 @@
+syntax: glob
+*.swp
+*.pyc
+cover/*
+logs/*
+package/*
+.DS_Store
+.pydevproject
+.project
+*.sublime-project
+*.sublime-workspace
+.coverage
+.env
+*.log
+*.ipynb
+vagrant/.vagrant/*
