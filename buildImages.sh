@@ -13,10 +13,10 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Build all the docker images before starting the stack
 cd ${DIR}/busybox
-docker build -t db/postgres_datastore .
+docker build -t starter/postgres_datastore .
 
 cd ${DIR}/db
-docker build -t db/postgres .
+docker build -t starter/postgres .
 
 cd ${DIR}/starter-api
-docker build -t starter-api .
+docker build -t starter/starter-api .

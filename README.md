@@ -12,17 +12,36 @@ Here is the deployment diagram, which is using Docker containers to deploy all s
 
 ![Starter Microservices Deployment](images/Starter_Microservices_Deployment.png)
 
-Assume all the required docker images are built (describe later in the sections), we can use `docker-compose` command to bring up all the containers,
+Following these steps to build all required docker images and bring up the application stack,
+* Run `buildImages.sh` to build all required docker images
+* Run `startStack.sh` to bring up the application stack
+* If shutting down the application stack, run `stopStack.sh` will suspend the application stack
+* If removing the application stack, run `teardownStack.sh` will delete all the application containers
+* If removing all docker images, run `cleanupImages.sh` to leave no trace
 
-    $ docker-compose -f docker-compose.yml up -d
+To start a fresh application stack, 
 
-Conversely, we can shutdown all the containers by,
+```
+./buildImages.sh
+./startStack.sh
+```
 
-    $ docker-compose -f docker-compose.yml down
+To shutdown and clear out the application stack,
+
+```
+./stopStack.sh
+./teardownStack.sh
+./cleanupImages.sh
+```
+
+To achieve any in between application state or retaining the built docker images,
+adjust the script running accordingly.
+
+The following section shows the details of the dockerization, therefore optional to read.
 
 
-### Persistent Volumes with Docker - Data-only Container Pattern
 ----------------
+### Persistent Volumes with Docker - Data-only Container Pattern
 
 -- Dockerfile --
 
@@ -33,23 +52,23 @@ Conversely, we can shutdown all the containers by,
 To create the volume image:
 
     $ cd busybox
-    $ docker build -t db/postgres_datastore .
+    $ docker build -t tex/postgres_datastore .
 
 To start the volume image container:
 
-    $ docker run -i -t --name postgres_data db/postgres_datastore
+    $ docker run -i -t --name postgres_exchange_data tex/postgres_exchange_datastore
 
-Since the postgres_data container likely won't ever need to be updated, and if it does we can easily handle moving the data around as needed, we essentially work-around the issues of losing container data and we still have good portability.
+Since the `postgres_exchange_data` container likely won't ever need to be updated, and if it does we can easily handle moving the data around as needed, we essentially work-around the issues of losing container data and we still have good portability.
 
-We can now create as many postgres_data instances as we can handle and use volumes from as many postgres_data style containers as we want as well (provided unique naming or use of container ID's). This can much more easily be scripted than mounting folders ourselves since we are letting docker do the heavy lifting.
+We can now create as many `tex/postgres_datastore` instances as we can handle and use volumes from as many `postgres_exchange_data` style containers as we want as well (provided unique naming or use of container ID's). This can much more easily be scripted than mounting folders ourselves since we are letting docker do the heavy lifting.
 
 One thing that's really cool is that these data-only containers don't even need to be running, it just needs to exist.
 
-### Create Postgres DB Image
 --------------------------
+### Create Postgres DB Image
 -- Dockerfile --
 
-    FROM postgres:9.3
+    FROM postgres:10.2
 
     RUN apt-get update && apt-get install -y vim-tiny
 
@@ -57,50 +76,31 @@ One thing that's really cool is that these data-only containers don't even need 
 
 To create the DB image:
 
-    $ cd db
-    $ docker build -t db/postgres .
+```bash
+cd db
+docker build -t starter/postgres .
+```
 
 To start the DB image container:
 
-    $ docker run -d \
-        -e POSTGRES_USER=docker \
-        -e POSTGRES_PASSWORD=docker \
-        -e POSTGRES_DB=starter \
-        --volumes-from postgres_data \
-        --name postgres \
-        -p 5432:5432 db/postgres
+```bash
+docker run -d \
+    -e POSTGRES_USER=admin \
+    -e POSTGRES_PASSWORD=admin \
+    -e POSTGRES_DB=starter \
+    --volumes-from starter-postgres_data \
+    --name starter-postgres \
+    -p 5432:5432 starter/postgres
+```
 
-Try connect to db/postgres container,
+Try connect to starter-postgres container,
 
-    $ psql -h localhost -U docker starter
+```bash
+psql -h starter-postgres -U admin starter
+```
 
-Try to start another postgres container to access the db,
-This is linking the named 'db', which we have started, to alias mydb into the container.
-We shall start a interactive shell `-ti` /bin/sh. The container will be automatically
-destroyed after running by `--rm` remove container parameter.
-
-    $ docker run --rm -ti --link postgres:mydb db/postgres /bin/sh
-
-    After we entered the container, do the following
-
-    # psql -h mydb -U docker starter
-    Password for user docker: <docker> 
-    psql (9.3.6)
-    Type "help" for help.
-
-    starter=# \dt
-                 List of relations
-     Schema |       Name       | Type  | Owner  
-    --------+------------------+-------+--------
-     public | starter_pxcodes  | table | docker
-     public | starter_users    | table | docker
-    (4 rows)
-
-    We can see the linked `mydb` host's `starter` database.
-
-
-### Create API starter-api Image
 -----------------------
+### Create API starter-api Image
 You can read the microservices [Starter API Documentation](starter-api/README.md)
 
 -- Dockerfile --
@@ -115,18 +115,21 @@ You can read the microservices [Starter API Documentation](starter-api/README.md
 
     ADD . /app
 
-To create the Starter API image:
+To create the API image:
 
-    $ cd starter-api
-    $ docker build -t starter-api .
+```
+cd starter-api
+docker build -t starter/starter-api .
+```
 
 To start the Starter API container:
 
-    $ docker run -d -t \
-        -v `pwd`/logs:/app/logs \
-        --name starter-api \
-        --link postgres:postgres \
-        -p 5000:5000 starter-api
+```bash
+docker run -d -t \
+    -v `pwd`/logs:/app/logs \
+    --name starter-api \
+    -p 5000:5000 starter/starter-api
+```
 
 
 ### Import Medical Procedural Codes into DB
@@ -144,14 +147,14 @@ To confirm this, we can run `docker network ls`.
     7749efcaa3dc        host                      host                local
     0c4c4f14a186        none                      null                local
 
-We should see the `postgres` and `starter-api` are part of the `flask-db-docker_default` network,
+We should see the `starter-postgres` and `starter-api` are part of the `flask-db-docker_default` network,
 
     $ docker network inspect flask-db-docker_default
 
     ...
     "Containers": {
         "b43291da217f705ea3d1676fb757b1dafc7c8fdf18f2df32d441e248a6ab8b31": {
-            "Name": "postgres",
+            "Name": "starter-postgres",
             "EndpointID": "d01bdf7da8de378b51928a7e7e2a55fab6995865ea5d1c7793e9923c9409f287",
             "MacAddress": "02:42:ac:1d:00:03",
             "IPv4Address": "172.29.0.3/16",
@@ -167,27 +170,38 @@ We should see the `postgres` and `starter-api` are part of the `flask-db-docker_
     }
 
 Then we shall start an instance of `starter-api` container to join the `flask-db-docker_default` network,
-so that we can access to the same `postgres` database connection.
+so that we can access to the same `starter-postgres` database connection.
+We shall start a interactive shell `-ti` /bin/sh. The container will be automatically
+destroyed after running by `--rm` remove container parameter.
 
-    $ docker run --rm -ti --network flask-db-docker_default starter-api /bin/sh
+```bash
+docker run --rm -ti --network flask-db-docker_default starter/starter-api /bin/sh
+```
 
 After we enter the container, we can execute the initial `starter` database creation
-by running the following `starter-api` commands,
+by running the following commands in `starter-api/startup` folder.
 
-    $ python manage.py createdb
+```bash
+python manage.py resetdb
+```
 
 We create a new user `admin` with the password `admin` (of course this is not secure)
 
-    $ python manage.py adduser admin admin
+After the database has been created, we can exercise the database by inserting all the medical procedure coes from the `tex-api/startup` folder.
 
-After the database has been created, we can exercise the database by inserting
-all the medical procedural codes from `data/starter_pxcodes.sql` into the `starter_pxcodes` table
-
-    $ psql -h localhost -U docker starter < data/starter_pxcodes.sql
+```bash
+docker run --rm -t \
+    --network flask-db-docker_default \
+    -v `pwd`/starter-api/startup:/app/startup \
+    starter/postgres /bin/bash -c \
+    "PGPASSWORD=admin psql -h starter-postgres -U admin starter < startup/starter_pxcodes.sql"
+```
 
 We can get the medical procedural data from the `starter-api` that we have run.
 
-    $ http --auth admin:admin http://localhost:5000/api/v1.0/pxcodes/
+```bash
+http --auth admin:admin http://localhost:5000/api/v1.0/pxcodes/
+```
 
 You should see the paged JSON response.
 

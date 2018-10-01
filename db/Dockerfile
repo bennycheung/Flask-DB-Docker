@@ -2,6 +2,11 @@ FROM postgres:10.2
 
 RUN apt-get update && apt-get install -y vim-tiny
 
+RUN mkdir /app
+WORKDIR /app
+
+ADD README.md /app/
+
 # Run the rest of the commands as the ``postgres`` user created by the
 # ``postgres-9.3`` package when it was ``apt-get installed``
 # USER postgres

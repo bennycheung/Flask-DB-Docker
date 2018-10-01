@@ -3,7 +3,7 @@ version: '2'
 services:
   starter-api:
     container_name: starter-api
-    image: starter-api
+    image: starter/starter-api
     volumes:
       - ./logs:/app/logs
     working_dir: /app
@@ -11,24 +11,24 @@ services:
     ports:
       - "5000:5000"
     links:
-      - postgres:postgres
+      - starter-postgres:starter-postgres
     depends_on:
-      - postgres
+      - starter-postgres
   
-  postgres:
-    container_name: postgres
-    image: db/postgres
+  starter-postgres:
+    container_name: starter-postgres
+    image: starter/postgres
     environment:
-      - POSTGRES_USER=docker
-      - POSTGRES_PASSWORD=docker
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
       - POSTGRES_DB=starter
     volumes_from:
-      - postgres_data
+      - starter-postgres_data
     ports:
       - "5432:5432"
     depends_on:
-      - postgres_data
+      - starter-postgres_data
 
-  postgres_data:
-    container_name: postgres_data
-    image: db/postgres_datastore
+  starter-postgres_data:
+    container_name: starter-postgres_data
+    image: starter/postgres_datastore
