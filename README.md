@@ -1,4 +1,7 @@
-# Microservices Architecture
+# Microservices using Docker
+Flask-DB-Docker is a companion starter framework that associated with my post on [Existential Crisis with Microservices using Docker](https://bennycheung.github.io/existential-crisis-with-microservices-using-docker). This framework can be used to rapidly construct any data-oriented service with a database backend.
+
+## Microservices Architecture
 This example has been composed as the Microserivices Architecture style.
 With this style, we could provide service components with a realistic compostability. We recommend to read the Martin Fowler and James Lewis's white paper on Microservice architecture. Their white paper goes much more in-depth for the drivers behind the [Microservice Architecture](http://martinfowler.com/articles/microservices.html)
 
